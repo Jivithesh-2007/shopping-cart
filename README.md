@@ -52,3 +52,17 @@ This is a **front-end prototype** (no backend required) that uses **LocalStorage
 ```bash
 git clone https://github.com/<your-username>/sustainable-shopping-assistant.git
 cd sustainable-shopping-assistant
+
+
+## 👨‍💻 Author
+
+**Jivithesh A S**  
+💻 Software Engineer | 🌿 Green Tech Innovator | 🤖 AI & Robotics Enthusiast  
+
+I’m passionate about building futuristic web experiences that merge **technology with sustainability**.  
+This project was inspired by the idea of helping people make smarter, **eco-friendly shopping decisions** through modern design and intuitive dashboards.  
+
+My long-term goal is to **create solutions where code meets climate responsibility** — empowering the next generation of sustainable digital platforms.  
+
+🌐 Let’s connect and collaborate to build a **greener tech future!**
+
