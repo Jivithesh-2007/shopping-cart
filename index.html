@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sustainable Shopping Assistant — Single-File App</title>
+  <meta name="description" content="Futuristic single-file SPA with Sign In/Up, Dashboard, Profile, Dark/Light + Accent themes."/>
+  <style>
+    /* ======================================================================
+       SUSTAINABLE SHOPPING ASSISTANT — SINGLE FILE
+       - Glassy futuristic UI
+       - SPA routing (Sign In / Sign Up / Dashboard / Profile)
+       - Dark & Light themes + 8 accent colors
+       - Minimal, clean cards; responsive
+       ====================================================================== */
+
+    /* -------------------- CSS VARIABLES -------------------- */
+    :root{
+      /* base (dark) */
+      --bg: #0f1724;
+      --panel: #0b1220;
+      --card: #0d1424;
+      --text: #e6eef8;
+      --muted: #93a4bf;
+      --line: rgba(255,255,255,.06);
+      --glass: rgba(255,255,255,.03);
+      --shadow: 0 10px 30px rgba(2,6,23,.50);
+      --radius: 14px;
+
+      /* accents (8) */
+      --accent-1:#10b981; /* emerald */
+      --accent-2:#06b6d4; /* cyan */
+      --accent-3:#7c3aed; /* violet */
+      --accent-4:#f97316; /* orange */
+      --accent-5:#ef4444; /* red */
+      --accent-6:#f59e0b; /* amber */
+      --accent-7:#3b82f6; /* blue */
+      --accent-8:#14b8a6; /* teal */
+
+      /* active accent hooks */
+      --accent: var(--accent-1);
+      --accent-b: var(--accent-7);
+
+      /* typography */
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    /* light mode overrides */
+    :root[data-theme="light"]{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --text: #0b1220;
+      --muted:#64748b;
+      --line: rgba(11,18,32,.10);
+      --glass: rgba(11,18,32,.04);
+      --shadow: 0 10px 26px rgba(11,18,32,.10);
+    }
+
+    /* -------------------- BASE -------------------- */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(800px 400px at 10% 10%, rgba(20,184,166,.08), transparent 60%),
+        radial-gradient(900px 420px at 90% 90%, rgba(59,130,246,.06), transparent 60%),
+        var(--bg);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    a{color:inherit}
+    .hide{display:none !important}
+
+    /* utility */
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);border-radius:2px}
+
+    /* -------------------- LAYOUT WRAPPERS -------------------- */
+    .auth-wrap, .app-wrap{padding:24px;max-width:1200px;margin:0 auto}
+
+    /* NAVBAR */
+    .navbar{
+      position:sticky;top:12px;z-index:40;
+      display:flex;align-items:center;gap:12px;justify-content:space-between;
+      padding:12px 16px;border-radius:16px;
+      background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(6px) saturate(120%);
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{
+      width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--accent-b));
+      box-shadow:0 8px 22px rgba(16,185,129,.18), 0 3px 10px rgba(59,130,246,.08);
+      letter-spacing:.5px;
+    }
+    .brand h1{font-size:16px;margin:0}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+
+    .nav-right{display:flex;align-items:center;gap:8px}
+    .search{
+      display:flex;align-items:center;gap:8px;padding:8px 10px;
+      border-radius:12px;border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);
+      min-width:260px;
+    }
+    .search input{
+      border:none;background:transparent;color:var(--text);outline:none;width:100%;
+      font-size:14px;
+    }
+
+    .btn{
+      border:1px solid var(--line);background:transparent;color:var(--text);
+      padding:8px 12px;border-radius:12px;font-weight:600;cursor:pointer;
+      transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+      backdrop-filter:blur(4px);
+    }
+    .btn:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .btn.primary{
+      border:none;color:#fff;
+      background:linear-gradient(90deg,var(--accent),var(--accent-b));
+      box-shadow:0 10px 26px rgba(16,185,129,.16);
+    }
+    .btn.ghost{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
+
+    .theme-toggle{font-size:16px}
+
+    /* ACCENT PICKER POPOVER */
+    .accent-pop{
+      position:relative
+    }
+    .accent-panel{
+      position:absolute;right:0;top:calc(100% + 8px);
+      background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;
+      display:none;grid-template-columns:repeat(4,28px);gap:8px;box-shadow:var(--shadow)
+    }
+    .accent-pop.open .accent-panel{display:grid}
+    .swatch{width:28px;height:28px;border-radius:8px;cursor:pointer;border:1px solid var(--line)}
+    .swatch[data-v="1"]{background:linear-gradient(90deg,var(--accent-1),var(--accent-7))}
+    .swatch[data-v="2"]{background:linear-gradient(90deg,var(--accent-2),var(--accent-7))}
+    .swatch[data-v="3"]{background:linear-gradient(90deg,var(--accent-3),var(--accent-1))}
+    .swatch[data-v="4"]{background:linear-gradient(90deg,var(--accent-4),var(--accent-6))}
+    .swatch[data-v="5"]{background:linear-gradient(90deg,var(--accent-5),var(--accent-3))}
+    .swatch[data-v="6"]{background:linear-gradient(90deg,var(--accent-6),var(--accent-2))}
+    .swatch[data-v="7"]{background:linear-gradient(90deg,var(--accent-7),var(--accent-2))}
+    .swatch[data-v="8"]{background:linear-gradient(90deg,var(--accent-8),var(--accent-1))}
+
+    /* APP LAYOUT */
+    .app{
+      margin-top:18px;
+      display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+      position:sticky;top:72px;
+      border:1px solid var(--line);border-radius:16px;padding:14px;
+      background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);
+      box-shadow:var(--shadow);
+    }
+    .side-group{display:grid;gap:8px}
+    .side-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+    .navlink{
+      display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;
+      border:1px solid transparent;transition:background .12s ease, border .12s ease, transform .12s ease;
+    }
+    .navlink:hover{background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);border-color:var(--line);transform:translateY(-1px)}
+    .navlink.active{background:linear-gradient(90deg,rgba(16,185,129,.18),rgba(20,184,166,.12));border-color:transparent}
+    .pill{
+      margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;color:#fff;
+      background:linear-gradient(90deg,var(--accent),var(--accent-b))
+    }
+
+    /* MAIN */
+    .main{min-height:600px}
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .h2{margin:0;font-size:18px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+
+    .card{
+      border:1px solid var(--line);border-radius:14px;padding:12px;
+      background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+      box-shadow:var(--shadow);transition:transform .18s cubic-bezier(.2,.9,.3,1)
+    }
+    .card:hover{transform:translateY(-4px)}
+    .card h3{margin:0 0 6px 0;font-size:14px}
+    .stat{display:flex;align-items:center;justify-content:space-between}
+    .stat .big{font-weight:900;font-size:24px}
+
+    /* PRODUCT CARDS (concise) */
+    .product{
+      display:flex;gap:12px;align-items:center
+    }
+    .thumb{
+      width:64px;height:64px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--accent-b));
+      box-shadow:0 8px 18px rgba(16,185,129,.18)
+    }
+    .badge{
+      font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);font-weight:700
+    }
+
+    /* PROFILE PAGE */
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab-btn{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
+    .tab-btn.active{color:#fff;border-color:transparent;background:linear-gradient(90deg,var(--accent),var(--accent-b))}
+    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .table td,.table th{padding:10px 12px}
+    .row{
+      background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+      border:1px solid var(--line);border-radius:12px
+    }
+    .kpi{display:flex;gap:10px;align-items:center}
+    .kpi i{width:8px;height:8px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-b))}
+
+    /* AUTH PAGES */
+    .auth-hero{
+      display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:center;margin-top:26px
+    }
+    .glass{
+      border:1px solid var(--line);border-radius:16px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);box-shadow:var(--shadow)
+    }
+    .title{font-size:28px;margin:0 0 6px 0}
+    .subtitle{margin:0;color:var(--muted)}
+
+    .form{display:grid;gap:10px}
+    .input{
+      width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+      color:var(--text);outline:none;font-size:14px
+    }
+    .helper{font-size:12px;color:var(--muted)}
+
+    /* DIALOG */
+    dialog{border:none;border-radius:14px;padding:0;background:transparent}
+    .modal{
+      background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;color:var(--text);box-shadow:var(--shadow);max-width:680px
+    }
+
+    /* FOOTER */
+    .footer{margin-top:16px;text-align:center;color:var(--muted);font-size:12px}
+
+    /* RESPONSIVE */
+    @media (max-width: 980px){
+      .app{grid-template-columns:1fr}
+      .sidebar{position:static}
+      .auth-hero{grid-template-columns:1fr}
+      .search{min-width:160px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== NAVBAR (Shared for App Pages) ===================== -->
+  <div class="auth-wrap" id="topbar">
+    <div class="navbar">
+      <div class="brand" style="cursor:pointer" id="brandHome" title="Go to Dashboard">
+        <div class="logo">SS</div>
+        <div>
+          <h1>Sustainable Shopping Assistant</h1>
+          <p>Shop greener. Track impact.</p>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <div class="search" role="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:.8"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2"/></svg>
+          <input id="globalSearch" placeholder="Search products or orders…"/>
+        </div>
+
+        <button class="btn ghost theme-toggle" id="themeBtn" title="Toggle theme">🌙</button>
+
+        <div class="accent-pop" id="accentPop">
+          <button class="btn ghost" id="accentBtn" title="Accent colors">🎨</button>
+          <div class="accent-panel" id="accentPanel" aria-label="Accent colors">
+            <div class="swatch" data-v="1" title="Emerald + Blue"></div>
+            <div class="swatch" data-v="2" title="Cyan + Blue"></div>
+            <div class="swatch" data-v="3" title="Violet + Emerald"></div>
+            <div class="swatch" data-v="4" title="Orange + Amber"></div>
+            <div class="swatch" data-v="5" title="Red + Violet"></div>
+            <div class="swatch" data-v="6" title="Amber + Cyan"></div>
+            <div class="swatch" data-v="7" title="Blue + Cyan"></div>
+            <div class="swatch" data-v="8" title="Teal + Emerald"></div>
+          </div>
+        </div>
+
+        <button class="btn primary" id="quickAuthBtn">Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ROUTES ===================== -->
+
+  <!-- SIGN IN -->
+  <section id="route-signin" class="auth-wrap">
+    <div class="auth-hero">
+      <div class="glass">
+        <h2 class="title">Welcome back 👋</h2>
+        <p class="subtitle">Sign in to discover eco-friendly products and track your impact.</p>
+        <div style="height:10px"></div>
+
+        <form class="form" id="signinForm" autocomplete="on">
+          <label>
+            <div class="small muted">Email</div>
+            <input class="input" id="inEmail" type="email" placeholder="you@example.com" required/>
+          </label>
+          <label>
+            <div class="small muted">Password</div>
+            <input class="input" id="inPass" type="password" placeholder="••••••••" minlength="6" required/>
+          </label>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <label style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" id="rememberMe"/>
+              <span class="small muted">Remember me</span>
+            </label>
+            <a class="small" href="#" id="fakeReset">Forgot password?</a>
+          </div>
+          <button class="btn primary" type="submit">Sign In</button>
+          <div class="helper">No account? <a href="#" id="toSignup">Create one</a></div>
+        </form>
+      </div>
+
+      <div class="glass">
+        <h2 class="title">Why this app?</h2>
+        <div class="divider" style="margin:10px 0"></div>
+        <div class="kpi"><i></i><strong>Transparent scores</strong> — see sustainability at a glance.</div>
+        <div class="kpi"><i></i><strong>Track impact</strong> — your CO₂ savings accumulate.</div>
+        <div class="kpi"><i></i><strong>Concise UI</strong> — clean cards, minimal noise.</div>
+        <div style="height:10px"></div>
+        <div class="grid">
+          <div class="card">
+            <h3>Demo Account</h3>
+            <div class="small muted">Use <code>demo@user.dev</code> / <code>password</code> to explore instantly.</div>
+            <div style="height:8px"></div>
+            <button class="btn" id="fillDemo">Fill demo credentials</button>
+          </div>
+          <div class="card">
+            <h3>Theme</h3>
+            <div class="small muted">Toggle dark/light • pick 8 accent palettes • auto-saves</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">Prototype · GreenTech & e-commerce · COs: CO1, CO4, CO5</div>
+  </section>
+
+  <!-- SIGN UP -->
+  <section id="route-signup" class="auth-wrap hide">
+    <div class="auth-hero">
+      <div class="glass">
+        <h2 class="title">Create your account ✨</h2>
+        <p class="subtitle">Join sustainable shoppers — it’s fast and free.</p>
+        <div style="height:10px"></div>
+
+        <form class="form" id="signupForm" autocomplete="on">
+          <label>
+            <div class="small muted">Full Name</div>
+            <input class="input" id="upName" type="text" placeholder="Your name" required/>
+          </label>
+          <label>
+            <div class="small muted">Email</div>
+            <input class="input" id="upEmail" type="email" placeholder="you@example.com" required/>
+          </label>
+          <label>
+            <div class="small muted">Password</div>
+            <input class="input" id="upPass" type="password" placeholder="Min 6 chars" minlength="6" required/>
+          </label>
+          <label>
+            <div class="small muted">Confirm Password</div>
+            <input class="input" id="upPass2" type="password" placeholder="Repeat password" minlength="6" required/>
+          </label>
+          <button class="btn primary" type="submit">Create Account</button>
+          <div class="helper">Already have an account? <a href="#" id="toSignin">Sign in</a></div>
+        </form>
+      </div>
+
+      <div class="glass">
+        <h2 class="title">What you’ll get</h2>
+        <div class="divider" style="margin:10px 0"></div>
+        <div class="grid">
+          <div class="card">
+            <h3>Impact Dashboard</h3>
+            <div class="small muted">CO₂ saved, orders, cart, quick actions</div>
+          </div>
+          <div class="card">
+            <h3>Profile Controls</h3>
+            <div class="small muted">Bank/UPI, address, preferences</div>
+          </div>
+          <div class="card">
+            <h3>Privacy-first</h3>
+            <div class="small muted">Local mock storage for this demo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">By creating an account you agree to our eco-friendly vibes 🌿</div>
+  </section>
+
+  <!-- APP (DASHBOARD + PROFILE) -->
+  <section id="route-app" class="app-wrap hide">
+    <div class="app">
+      <!-- Sidebar -->
+      <aside class="sidebar" aria-label="Primary navigation">
+        <div class="side-group">
+          <div class="side-title">Menu</div>
+          <div class="navlink active" data-nav="dashboard">
+            <span>🏠</span><span>Dashboard</span>
+          </div>
+          <div class="navlink" data-nav="products">
+            <span>🛒</span><span>Products</span><span class="pill" id="cartCount">0</span>
+          </div>
+          <div class="navlink" data-nav="profile">
+            <span>👤</span><span>Profile</span>
+          </div>
+          <div class="navlink" data-nav="settings">
+            <span>⚙️</span><span>Settings</span>
+          </div>
+        </div>
+        <div class="divider" style="margin:12px 0"></div>
+        <div class="side-group">
+          <div class="side-title">Quick</div>
+          <div class="navlink" id="openImpact">
+            <span>📈</span><span>Impact Details</span>
+          </div>
+          <div class="navlink" id="logoutBtn">
+            <span>🚪</span><span>Logout</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="main">
+        <!-- DASHBOARD VIEW -->
+        <section id="view-dashboard">
+          <div class="section-header">
+            <h2 class="h2">Dashboard</h2>
+            <div class="small muted" id="welcomeName">Welcome!</div>
+          </div>
+
+          <div class="grid">
+            <div class="card">
+              <h3>CO₂ Saved</h3>
+              <div class="stat">
+                <div class="big" id="statCo2">~74 kg</div>
+                <span class="badge">+12% MoM</span>
+              </div>
+              <div style="height:8px"></div>
+              <div class="small muted">Replacing 3 high-emission items halves your footprint.</div>
+            </div>
+
+            <div class="card">
+              <h3>Orders</h3>
+              <div class="stat">
+                <div class="big" id="statOrders">2</div>
+                <button class="btn" data-nav="profile" data-open-tab="orders">View</button>
+              </div>
+              <div style="height:8px"></div>
+              <div class="small muted">Track shipment, returns, invoices</div>
+            </div>
+
+            <div class="card">
+              <h3>Cart</h3>
+              <div class="stat">
+                <div class="big" id="statCart">0</div>
+                <button class="btn" data-nav="products">Shop</button>
+              </div>
+              <div style="height:8px"></div>
+              <div class="small muted">Add low-footprint items</div>
+            </div>
+
+            <div class="card">
+              <h3>Impact Sparkline</h3>
+              <canvas id="impactChart" height="80"></canvas>
+              <div class="small muted">Monthly CO₂ savings (kg)</div>
+            </div>
+          </div>
+
+          <div style="height:14px"></div>
+
+          <div class="card">
+            <div class="section-header">
+              <h3 style="margin:0">Recent Products</h3>
+              <button class="btn" data-nav="products">Browse All</button>
+            </div>
+            <div id="recentGrid" class="grid"></div>
+          </div>
+        </section>
+
+        <!-- PRODUCTS VIEW -->
+        <section id="view-products" class="hide">
+          <div class="section-header">
+            <h2 class="h2">Products</h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label class="small muted">Sort</label>
+              <select id="sortProducts" class="btn" style="padding:8px 10px;border-radius:10px">
+                <option value="best">Best Match</option>
+                <option value="score">Sustainability Score</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="prodGrid" class="grid" aria-live="polite"></div>
+        </section>
+
+        <!-- PROFILE VIEW -->
+        <section id="view-profile" class="hide">
+          <div class="section-header">
+            <h2 class="h2">Profile</h2>
+            <div class="small muted" id="profileEmail"></div>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="Profile sections">
+            <button class="tab-btn active" data-tab="orders">My Orders</button>
+            <button class="tab-btn" data-tab="cart">My Cart</button>
+            <button class="tab-btn" data-tab="bank">Bank / UPI</button>
+            <button class="tab-btn" data-tab="account">Account Settings</button>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <!-- ORDERS TAB -->
+          <div id="tab-orders">
+            <div class="card">
+              <h3>Orders</h3>
+              <table class="table">
+                <thead>
+                <tr class="small muted">
+                  <th>Order ID</th><th>Items</th><th>Total</th><th>Status</th><th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="ordersBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CART TAB -->
+          <div id="tab-cart" class="hide">
+            <div class="card">
+              <h3>Cart</h3>
+              <div id="cartList" class="grid"></div>
+              <div class="divider" style="margin:12px 0"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="small muted">Estimated CO₂: <b id="cartCO2">0 kg</b></div>
+                <div>
+                  <span class="badge" id="cartTotal">₹0.00</span>
+                  <button class="btn primary" id="checkoutBtn">Checkout</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BANK / UPI TAB -->
+          <div id="tab-bank" class="hide">
+            <div class="card">
+              <h3>Payment</h3>
+              <div class="grid">
+                <div class="glass">
+                  <div class="small muted">UPI ID</div>
+                  <input class="input" id="upiId" placeholder="name@bank"/>
+                </div>
+                <div class="glass">
+                  <div class="small muted">Saved Card (demo)</div>
+                  <input class="input" id="cardMasked" value="**** **** **** 1842" disabled/>
+                </div>
+                <div class="glass">
+                  <div class="small muted">Billing Address</div>
+                  <input class="input" id="billing" placeholder="Street, City, PIN"/>
+                </div>
+                <div class="glass">
+                  <div class="small muted">Preferences</div>
+                  <label style="display:flex;align-items:center;gap:8px">
+                    <input type="checkbox" id="ecoPref" checked/>
+                    <span class="small">Prefer eco-packaging</span>
+                  </label>
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <button class="btn primary" id="saveBank">Save Payment Details</button>
+              <span class="small muted" id="bankSaved" style="margin-left:8px"></span>
+            </div>
+          </div>
+
+          <!-- ACCOUNT TAB -->
+          <div id="tab-account" class="hide">
+            <div class="card">
+              <h3>Account</h3>
+              <div class="grid">
+                <div class="glass">
+                  <div class="small muted">Full Name</div>
+                  <input class="input" id="accName" placeholder="Your name"/>
+                </div>
+                <div class="glass">
+                  <div class="small muted">Email</div>
+                  <input class="input" id="accEmail" placeholder="you@example.com" disabled/>
+                </div>
+                <div class="glass">
+                  <div class="small muted">Password</div>
+                  <input class="input" id="accPass" type="password" placeholder="••••••••"/>
+                </div>
+              </div>
+              <div style="height:10px"></div>
+              <button class="btn" id="saveAccount">Save Changes</button>
+              <span class="small muted" id="accSaved" style="margin-left:8px"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- SETTINGS VIEW -->
+        <section id="view-settings" class="hide">
+          <div class="section-header">
+            <h2 class="h2">Settings</h2>
+            <div class="small muted">Theme, accessibility, data</div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Theme</h3>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn" id="toggleThemeBtn">Toggle Dark/Light</button>
+                <span class="badge">Auto-saved</span>
+              </div>
+              <div style="height:10px"></div>
+              <div class="small muted">Pick accent in the navbar 🎨</div>
+            </div>
+            <div class="card">
+              <h3>Data</h3>
+              <button class="btn" id="clearData">Clear Local Demo Data</button>
+              <div class="small muted">Clears mock auth, cart, orders, preferences</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="footer">Prototype UI — Sustainable Shopping Assistant · Designed for concise dashboards with sidebars & navbars</div>
+  </section>
+
+  <!-- ===================== MODALS ===================== -->
+  <dialog id="impactModal">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">Impact Details</h3>
+        <button class="btn" id="closeImpact">Close</button>
+      </div>
+      <div class="divider" style="margin:10px 0"></div>
+      <canvas id="impactBig" height="140"></canvas>
+      <div class="small muted">Your monthly CO₂ savings trend. Keep choosing high-score items (≥85).</div>
+    </div>
+  </dialog>
+
+  <!-- ===================== SCRIPT ===================== -->
+  <script>
+    /* =========================================================================
+       SPA LOGIC (NO BACKEND)
+       - Router (views): signin, signup, app (dashboard/products/profile/settings)
+       - Mock auth + localStorage persistence
+       - Products list, cart, orders
+       - Profile tabs + payment & account save
+       - Theme + accent manager
+       - Small charts (canvas)
+       ========================================================================= */
+
+    // -------------------- DATA --------------------
+    const PRODUCTS = [
+      { id:'p1', name:'Recycled Cotton Tee', price:19.99, rating:4.5, sustainabilityScore:88, footprintKgCO2:2.2, badges:['Recycled','Fair Trade'], category:'clothing', description:'Soft tee made from 80% recycled cotton.' },
+      { id:'p2', name:'Zero-Waste Shampoo Bar', price:12.50, rating:4.7, sustainabilityScore:91, footprintKgCO2:0.3, badges:['Plastic-Free','Cruelty-Free'], category:'personal-care', description:'Concentrated bar, palm-oil free.' },
+      { id:'p3', name:'Bamboo Toothbrush (2)', price:7.99, rating:4.2, sustainabilityScore:78, footprintKgCO2:0.05, badges:['Biodegradable'], category:'personal-care', description:'Handle from sustainably-sourced bamboo.' },
+      { id:'p4', name:'Energy-Saving LED Lamp', price:24.90, rating:4.6, sustainabilityScore:84, footprintKgCO2:5.6, badges:['Energy Star'], category:'electronics', description:'Long life, low energy.' },
+      { id:'p5', name:'Refillable Glass Bottle', price:14.00, rating:4.4, sustainabilityScore:86, footprintKgCO2:0.15, badges:['Recycled'], category:'home', description:'Tempered glass, reusable.' },
+      { id:'p6', name:'Organic Linen Shirt', price:32.99, rating:4.3, sustainabilityScore:82, footprintKgCO2:3.1, badges:['Organic'], category:'clothing', description:'Lightweight, low water use.' },
+      { id:'p7', name:'Compostable Phone Case', price:18.90, rating:4.1, sustainabilityScore:75, footprintKgCO2:0.5, badges:['Biodegradable'], category:'electronics', description:'Plant-based polymers.' },
+      { id:'p8', name:'Reusable Cotton Tote', price:6.50, rating:4.0, sustainabilityScore:73, footprintKgCO2:0.9, badges:['Recycled'], category:'home', description:'Replaces single-use bags.' }
+    ];
+
+    const DEMO_USER = { name:'Jivithesh', email:'demo@user.dev', password:'password' };
+
+    // -------------------- STATE --------------------
+    const state = {
+      theme: localStorage.getItem('ssa_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme:light)').matches ? 'light':'dark'),
+      accent: localStorage.getItem('ssa_accent') || '1', // "1".."8"
+      user: JSON.parse(localStorage.getItem('ssa_user') || 'null'),
+      cart: JSON.parse(localStorage.getItem('ssa_cart') || '[]'),
+      orders: JSON.parse(localStorage.getItem('ssa_orders') || JSON.stringify([
+        { id:'ORD-7412', items:['Recycled Cotton Tee'], total:19.99, status:'Shipped' },
+        { id:'ORD-7290', items:['Zero-Waste Shampoo Bar','Bamboo Toothbrush (2)'], total:20.49, status:'Delivered' }
+      ])),
+      route: 'signin',       // 'signin' | 'signup' | 'app'
+      view: 'dashboard',     // inside app: 'dashboard' | 'products' | 'profile' | 'settings'
+      profileTab: 'orders'   // profile tabs
+    };
+
+    // apply theme/accent immediately
+    document.documentElement.setAttribute('data-theme', state.theme);
+    applyAccent(state.accent);
+    document.getElementById('themeBtn').textContent = state.theme === 'light' ? '🌞' : '🌙';
+    document.getElementById('quickAuthBtn').textContent = state.user ? 'My Account' : 'Sign In';
+
+    // -------------------- ROUTER --------------------
+    const routes = {
+      signin: document.getElementById('route-signin'),
+      signup: document.getElementById('route-signup'),
+      app:    document.getElementById('route-app')
+    };
+    const views = {
+      dashboard: document.getElementById('view-dashboard'),
+      products:  document.getElementById('view-products'),
+      profile:   document.getElementById('view-profile'),
+      settings:  document.getElementById('view-settings')
+    };
+
+    function showRoute(name){
+      state.route = name;
+      for (const k in routes) routes[k].classList.add('hide');
+      routes[name].classList.remove('hide');
+      // topbar visibility: show always
+      document.getElementById('topbar').classList.remove('hide');
+
+      if (name === 'app'){
+        // default app view
+        showView(state.view);
+        updateSidebarActive();
+        hydrateDashboard();
+        renderProducts();
+        renderProfile();
+      }
+      persist();
+    }
+
+    function showView(name){
+      state.view = name;
+      for (const k in views) views[k].classList.add('hide');
+      views[name].classList.remove('hide');
+      updateSidebarActive();
+      if (name === 'products') renderProducts();
+      if (name === 'profile')  renderProfile();
+      if (name === 'dashboard') hydrateDashboard();
+      if (name === 'settings')  null;
+      persist();
+    }
+
+    function updateSidebarActive(){
+      document.querySelectorAll('.sidebar .navlink').forEach(n=>n.classList.remove('active'));
+      const active = document.querySelector(`.sidebar .navlink[data-nav="${state.view}"]`);
+      if (active) active.classList.add('active');
+    }
+
+    // -------------------- AUTH --------------------
+    const signinForm = document.getElementById('signinForm');
+    const signupForm = document.getElementById('signupForm');
+
+    document.getElementById('toSignup').onclick = (e)=>{e.preventDefault();showRoute('signup')};
+    document.getElementById('toSignin').onclick = (e)=>{e.preventDefault();showRoute('signin')};
+    document.getElementById('fillDemo').onclick = ()=>{
+      document.getElementById('inEmail').value = DEMO_USER.email;
+      document.getElementById('inPass').value  = DEMO_USER.password;
+    };
+
+    signinForm?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const email = document.getElementById('inEmail').value.trim();
+      const pass  = document.getElementById('inPass').value;
+      const stored = JSON.parse(localStorage.getItem('ssa_user') || 'null');
+
+      // mock check: demo account OR stored signup
+      if ((email === DEMO_USER.email && pass === DEMO_USER.password) ||
+          (stored && stored.email === email && stored.password === pass)){
+        state.user = stored && stored.email === email ? stored : DEMO_USER;
+        localStorage.setItem('ssa_user', JSON.stringify(state.user));
+        document.getElementById('quickAuthBtn').textContent = 'My Account';
+        showRoute('app');
+        showView('dashboard');
+      } else {
+        alert('Invalid credentials for this demo.\nTry demo@user.dev / password\n—or Sign Up first.');
+      }
+    });
+
+    signupForm?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('upName').value.trim();
+      const email= document.getElementById('upEmail').value.trim();
+      const p1   = document.getElementById('upPass').value;
+      const p2   = document.getElementById('upPass2').value;
+      if (p1 !== p2){ alert('Passwords do not match.'); return; }
+      state.user = { name, email, password:p1 };
+      localStorage.setItem('ssa_user', JSON.stringify(state.user));
+      document.getElementById('quickAuthBtn').textContent = 'My Account';
+      showRoute('app');
+      showView('dashboard');
+    });
+
+    document.getElementById('quickAuthBtn').onclick = ()=>{
+      if (state.user){ showRoute('app'); showView('profile'); }
+      else { showRoute('signin'); }
+    };
+    document.getElementById('brandHome').onclick = ()=> state.user ? (showRoute('app'), showView('dashboard')) : showRoute('signin');
+
+    // -------------------- THEME & ACCENT --------------------
+    document.getElementById('themeBtn').onclick = toggleTheme;
+    document.getElementById('toggleThemeBtn')?.addEventListener('click', toggleTheme);
+
+    function toggleTheme(){
+      state.theme = state.theme === 'dark' ? 'light':'dark';
+      document.documentElement.setAttribute('data-theme', state.theme);
+      document.getElementById('themeBtn').textContent = state.theme === 'light' ? '🌞' : '🌙';
+      persist();
+    }
+
+    // accent popover
+    const accentPop   = document.getElementById('accentPop');
+    const accentPanel = document.getElementById('accentPanel');
+    document.getElementById('accentBtn').onclick = ()=>{
+      accentPop.classList.toggle('open');
+    };
+    window.addEventListener('click',(e)=>{
+      if (!accentPop.contains(e.target)) accentPop.classList.remove('open');
+    });
+    accentPanel.querySelectorAll('.swatch').forEach(s=>{
+      s.addEventListener('click', ()=>{
+        const v = s.getAttribute('data-v') || '1';
+        applyAccent(v);
+        state.accent = v;
+        persist();
+        accentPop.classList.remove('open');
+      });
+    });
+
+    function applyAccent(code){
+      let a='--accent-1', b='--accent-7';
+      switch(code){
+        case '1': a='--accent-1'; b='--accent-7'; break;
+        case '2': a='--accent-2'; b='--accent-7'; break;
+        case '3': a='--accent-3'; b='--accent-1'; break;
+        case '4': a='--accent-4'; b='--accent-6'; break;
+        case '5': a='--accent-5'; b='--accent-3'; break;
+        case '6': a='--accent-6'; b='--accent-2'; break;
+        case '7': a='--accent-7'; b='--accent-2'; break;
+        case '8': a='--accent-8'; b='--accent-1'; break;
+      }
+      const rs = getComputedStyle(document.documentElement);
+      document.documentElement.style.setProperty('--accent',  rs.getPropertyValue(a).trim());
+      document.documentElement.style.setProperty('--accent-b',rs.getPropertyValue(b).trim());
+    }
+
+    // -------------------- DASHBOARD --------------------
+    function hydrateDashboard(){
+      document.getElementById('welcomeName').textContent = state.user ? `Hello, ${state.user.name}!` : 'Welcome!';
+      // small canvas sparkline
+      drawSparkline('impactChart', [8,6,10,5,12,9,7,11,6,8,9,10]);
+      // recent products (first 4)
+      const recentEl = document.getElementById('recentGrid');
+      recentEl.innerHTML = '';
+      PRODUCTS.slice(0,4).forEach(p=>{
+        const card = document.createElement('div');
+        card.className='card';
+        card.innerHTML = `
+          <div class="product">
+            <div class="thumb">${p.name.split(' ').slice(0,2).map(x=>x[0]).join('')}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:800">${p.name}</div>
+              <div class="small muted">${p.badges.join(' • ')}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:900">₹${p.price.toFixed(2)}</div>
+              <button class="btn small add" data-id="${p.id}">Add</button>
+            </div>
+          </div>
+        `;
+        recentEl.appendChild(card);
+      });
+      recentEl.querySelectorAll('.add').forEach(b=>{
+        b.onclick = ()=> addToCart(b.getAttribute('data-id'));
+      });
+
+      // stats
+      document.getElementById('statCart').textContent   = String(state.cart.length);
+      document.getElementById('cartCount').textContent  = String(state.cart.length);
+      document.getElementById('statOrders').textContent = String(state.orders.length);
+    }
+
+    function drawSparkline(id, data){
+      const c = document.getElementById(id); if (!c) return;
+      const ctx = c.getContext('2d'), w = c.width, h = c.height;
+      ctx.clearRect(0,0,w,h);
+      const max = Math.max(...data), min = Math.min(...data);
+      const pad = 6;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-b') || '#14b8a6';
+      ctx.beginPath();
+      data.forEach((v,i)=>{
+        const x = pad + (i/(data.length-1))*(w-pad*2);
+        const y = h - pad - ((v-min)/(max-min||1))*(h-pad*2);
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+      const grad = ctx.createLinearGradient(0,0,0,h);
+      grad.addColorStop(0,'rgba(20,184,166,0.18)');
+      grad.addColorStop(1,'rgba(20,184,166,0.02)');
+      ctx.lineTo(w-pad,h-pad); ctx.lineTo(pad,h-pad); ctx.closePath();
+      ctx.fillStyle = grad; ctx.fill();
+    }
+
+    // -------------------- PRODUCTS --------------------
+    const sortSel = document.getElementById('sortProducts');
+    sortSel.addEventListener('change', ()=> renderProducts());
+
+    function getFilteredProducts(){
+      const q = (document.getElementById('globalSearch').value||'').trim().toLowerCase();
+      let list = PRODUCTS.filter(p => !q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
+      const s = sortSel.value;
+      list = list.sort((a,b)=>{
+        if (s==='score') return b.sustainabilityScore - a.sustainabilityScore;
+        if (s==='price-asc') return a.price - b.price;
+        if (s==='price-desc') return b.price - a.price;
+        return (b.sustainabilityScore + b.rating*8 - b.price) - (a.sustainabilityScore + a.rating*8 - a.price);
+      });
+      return list;
+    }
+
+    function renderProducts(){
+      const grid = document.getElementById('prodGrid');
+      grid.innerHTML='';
+      const list = getFilteredProducts();
+      if (!list.length){
+        grid.innerHTML = `<div class="card"><strong>No results</strong><div class="small muted">Try a different search</div></div>`;
+        return;
+      }
+      list.forEach(p=>{
+        const el = document.createElement('div');
+        el.className='card';
+        el.innerHTML = `
+          <div class="product">
+            <div class="thumb" title="Score ${p.sustainabilityScore}">${p.name.split(' ').slice(0,2).map(x=>x[0]).join('')}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:800">${p.name}</div>
+              <div class="small muted">${p.description}</div>
+              <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+                ${p.badges.map(b=>`<span class="badge">${b}</span>`).join('')}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:900">₹${p.price.toFixed(2)}</div>
+              <div class="small muted" style="margin-top:6px">${p.footprintKgCO2} kg CO₂</div>
+              <div style="height:6px"></div>
+              <button class="btn add" data-id="${p.id}">Add to Cart</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+      grid.querySelectorAll('.add').forEach(b=>{
+        b.onclick = ()=> addToCart(b.getAttribute('data-id'));
+      });
+    }
+
+    function addToCart(id){
+      const prod = PRODUCTS.find(x=>x.id===id);
+      if (!prod) return;
+      state.cart.push(id);
+      persist();
+      hydrateDashboard();
+      if (state.view === 'profile') renderCart();
+      alert(`${prod.name} added to cart — est. CO₂ ${prod.footprintKgCO2} kg`);
+    }
+
+    // -------------------- PROFILE --------------------
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(b=>{
+      b.addEventListener('click', ()=>{
+        tabButtons.forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        state.profileTab = b.getAttribute('data-tab');
+        showTab(state.profileTab);
+        persist();
+      });
+    });
+
+    function showTab(name){
+      ['orders','cart','bank','account'].forEach(t=>{
+        document.getElementById(`tab-${t}`).classList.add('hide');
+      });
+      document.getElementById(`tab-${name}`).classList.remove('hide');
+    }
+
+    function renderProfile(){
+      // header
+      document.getElementById('profileEmail').textContent = state.user?.email || '';
+      // tabs
+      tabButtons.forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab')===state.profileTab));
+      showTab(state.profileTab);
+      // orders + cart
+      renderOrders();
+      renderCart();
+      // load saved bank/account
+      const bank = JSON.parse(localStorage.getItem('ssa_bank') || '{}');
+      document.getElementById('upiId').value = bank.upi || '';
+      document.getElementById('billing').value = bank.billing || '';
+      document.getElementById('ecoPref').checked = bank.ecoPref ?? true;
+      document.getElementById('accName').value = state.user?.name || '';
+      document.getElementById('accEmail').value= state.user?.email || '';
+    }
+
+    function renderOrders(){
+      const tb = document.getElementById('ordersBody');
+      tb.innerHTML='';
+      state.orders.forEach(o=>{
+        const tr = document.createElement('tr');
+        tr.className='row';
+        tr.innerHTML = `
+          <td><b>${o.id}</b></td>
+          <td>${o.items.join(', ')}</td>
+          <td>₹${o.total.toFixed(2)}</td>
+          <td><span class="badge">${o.status}</span></td>
+          <td><button class="btn small" data-oid="${o.id}">Track</button></td>
+        `;
+        tb.appendChild(tr);
+      });
+      tb.querySelectorAll('button').forEach(b=>{
+        b.onclick = ()=>{
+          alert(`Order ${b.getAttribute('data-oid')} is ${state.orders.find(x=>x.id===b.getAttribute('data-oid')).status}.`);
+        };
+      });
+    }
+
+    function renderCart(){
+      const list = document.getElementById('cartList'); list.innerHTML='';
+      const items = state.cart.map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+      let total = 0, co2 = 0;
+      items.forEach(p=>{
+        total += p.price; co2 += p.footprintKgCO2;
+        const el = document.createElement('div');
+        el.className='card';
+        el.innerHTML = `
+          <div class="product">
+            <div class="thumb">${p.name.split(' ').slice(0,2).map(x=>x[0]).join('')}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:800">${p.name}</div>
+              <div class="small muted">${p.badges.join(' • ')}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:900">₹${p.price.toFixed(2)}</div>
+              <div class="small muted">${p.footprintKgCO2} kg CO₂</div>
+              <div style="height:6px"></div>
+              <button class="btn" data-remove="${p.id}">Remove</button>
+            </div>
+          </div>
+        `;
+        list.appendChild(el);
+      });
+      list.querySelectorAll('button[data-remove]').forEach(b=>{
+        b.onclick = ()=>{
+          const id = b.getAttribute('data-remove');
+          const idx = state.cart.indexOf(id);
+          if (idx>-1) state.cart.splice(idx,1);
+          persist();
+          renderCart();
+          hydrateDashboard();
+        };
+      });
+      document.getElementById('cartTotal').textContent = '₹'+ total.toFixed(2);
+      document.getElementById('cartCO2').textContent   = co2.toFixed(2)+' kg';
+      document.getElementById('cartCount').textContent  = String(state.cart.length);
+      document.getElementById('statCart').textContent   = String(state.cart.length);
+    }
+
+    document.getElementById('checkoutBtn').onclick = ()=>{
+      if (!state.cart.length){ alert('Your cart is empty.'); return; }
+      const items = state.cart.map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+      const total = items.reduce((s,p)=>s+p.price,0);
+      const newId = 'ORD-'+Math.floor(6000+Math.random()*4000);
+      state.orders.unshift({ id:newId, items:items.map(i=>i.name), total, status:'Processing' });
+      state.cart = [];
+      persist();
+      renderOrders();
+      renderCart();
+      alert(`Order ${newId} placed!`);
+    };
+
+    // save bank/upi
+    document.getElementById('saveBank').onclick = ()=>{
+      const data = {
+        upi: document.getElementById('upiId').value.trim(),
+        billing: document.getElementById('billing').value.trim(),
+        ecoPref: document.getElementById('ecoPref').checked
+      };
+      localStorage.setItem('ssa_bank', JSON.stringify(data));
+      document.getElementById('bankSaved').textContent = 'Saved ✓';
+      setTimeout(()=>document.getElementById('bankSaved').textContent='', 1500);
+    };
+
+    // save account
+    document.getElementById('saveAccount').onclick = ()=>{
+      const name = document.getElementById('accName').value.trim();
+      const pass = document.getElementById('accPass').value;
+      state.user.name = name || state.user.name;
+      if (pass) state.user.password = pass;
+      localStorage.setItem('ssa_user', JSON.stringify(state.user));
+      document.getElementById('accSaved').textContent = 'Saved ✓';
+      setTimeout(()=>document.getElementById('accSaved').textContent='', 1500);
+      hydrateDashboard();
+    };
+
+    // -------------------- NAV EVENTS --------------------
+    // sidebar nav
+    document.querySelectorAll('.sidebar .navlink[data-nav]').forEach(n=>{
+      n.addEventListener('click', ()=>{
+        const v = n.getAttribute('data-nav');
+        if (v==='dashboard'||v==='products'||v==='profile'||v==='settings') showView(v);
+      });
+    });
+
+    // open Profile->Orders from dashboard button
+    document.querySelectorAll('[data-open-tab]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const tab = b.getAttribute('data-open-tab');
+        showView('profile');
+        state.profileTab = tab;
+        renderProfile();
+      });
+    });
+
+    // impact modal
+    const impactDlg = document.getElementById('impactModal');
+    document.getElementById('openImpact').onclick = ()=>{
+      impactDlg.showModal();
+      drawBigImpact();
+    };
+    document.getElementById('closeImpact').onclick = ()=>impactDlg.close();
+
+    function drawBigImpact(){
+      drawSparkline('impactBig', [8,6,10,5,12,9,7,11,6,8,9,10].map((v,i)=> v + Math.sin(i/2)*2));
+    }
+
+    // global search (enter navigates to products)
+    document.getElementById('globalSearch').addEventListener('keydown',(e)=>{
+      if (e.key==='Enter'){ showView('products'); renderProducts(); }
+    });
+
+    // top settings: clear data
+    document.getElementById('clearData').onclick = ()=>{
+      localStorage.removeItem('ssa_user');
+      localStorage.removeItem('ssa_cart');
+      localStorage.removeItem('ssa_orders');
+      localStorage.removeItem('ssa_bank');
+      alert('Demo data cleared.');
+      state.user=null; state.cart=[]; // keep orders default
+      localStorage.setItem('ssa_orders', JSON.stringify([
+        { id:'ORD-7412', items:['Recycled Cotton Tee'], total:19.99, status:'Shipped' },
+        { id:'ORD-7290', items:['Zero-Waste Shampoo Bar','Bamboo Toothbrush (2)'], total:20.49, status:'Delivered' }
+      ]));
+      state.orders = JSON.parse(localStorage.getItem('ssa_orders'));
+      showRoute('signin');
+    };
+
+    // logout
+    document.getElementById('logoutBtn').onclick = ()=>{
+      state.user=null; localStorage.removeItem('ssa_user');
+      document.getElementById('quickAuthBtn').textContent = 'Sign In';
+      showRoute('signin');
+    };
+
+    // fake reset
+    document.getElementById('fakeReset').onclick = (e)=>{e.preventDefault(); alert('Demo reset:\nUse demo@user.dev / password');};
+
+    // -------------------- PERSIST --------------------
+    function persist(){
+      localStorage.setItem('ssa_theme', state.theme);
+      localStorage.setItem('ssa_accent', state.accent);
+      if (state.user) localStorage.setItem('ssa_user', JSON.stringify(state.user));
+      localStorage.setItem('ssa_cart', JSON.stringify(state.cart));
+      localStorage.setItem('ssa_orders', JSON.stringify(state.orders));
+    }
+
+    // -------------------- INIT --------------------
+    // route depending on auth
+    if (state.user){ showRoute('app'); showView('dashboard'); }
+    else { showRoute('signin'); }
+
+    // keyboard shortcuts
+    window.addEventListener('keydown', (e)=>{
+      if ((e.ctrlKey||e.metaKey) && e.key==='t'){ e.preventDefault(); toggleTheme(); }
+      if ((e.ctrlKey||e.metaKey) && e.key==='f'){ e.preventDefault(); document.getElementById('globalSearch').focus(); }
+    });
+  </script>
+</body>
+</html>
