@@ -46,14 +46,6 @@ This is a **front-end prototype** (no backend required) that uses **LocalStorage
 
 ---
 
-## 🚀 Getting Started
-
-### 1️⃣ Clone the Repository
-```bash
-git clone https://github.com/<your-username>/sustainable-shopping-assistant.git
-cd sustainable-shopping-assistant
-
-
 ## 👨‍💻 Author
 
 **Jivithesh A S**  
@@ -65,4 +57,14 @@ This project was inspired by the idea of helping people make smarter, **eco-frie
 My long-term goal is to **create solutions where code meets climate responsibility** — empowering the next generation of sustainable digital platforms.  
 
 🌐 Let’s connect and collaborate to build a **greener tech future!**
+
+
+
+## 🚀 Getting Started
+
+### 1️⃣ Clone the Repository
+```bash
+git clone https://github.com/<your-username>/sustainable-shopping-assistant.git
+cd sustainable-shopping-assistant
+
 
